@@ -5,6 +5,7 @@
 | Archivo | Para qué sirve |
 |---|---|
 | `vercel/index.html` | **El formulario** que usan los contratistas (única versión; es la que se publica en Vercel). |
+| `vercel/instructivo.html` | **Instructivo de uso** para contratistas (enlazado desde el formulario). Actualizarlo cada vez que cambie el formulario. |
 | `vercel/vercel.json` | Configuración de Vercel con cabeceras de seguridad. |
 | `apps-script/CuentasCobro.gs` | Script de la Google Sheet de contabilidad que registra las cuentas que llegan al correo. |
 | `Cuenta_de_Cobro_Binaria_Empleados_v1_original.html` | Respaldo de la primera versión del formulario (referencia). |
@@ -38,6 +39,9 @@ navegador con jsPDF (cargado desde cdnjs con verificación de integridad); si no
      no encaje) y una **descripción** obligatoria de lo que se hizo. La lista se edita en la constante
      `TIPOS_ACTIVIDAD` al inicio del script de `vercel/index.html`. Los tipos llegan a la hoja de contabilidad
      en la columna *Tipo de actividad*, útil para asignar el centro de costo.
+   - **Fechas:** una fila por evento. Varios días seguidos con el mismo horario → fecha de inicio y de fin en una
+     fila (horas = horas por día × días; el valor es el total de la fila). Un día con otro horario → otra fila
+     (botón **Duplicar al día siguiente**). Una fila no puede salirse del periodo cobrado.
 3. **Validar y generar cuentas** muestra:
    - un botón **Descargar PDF** por cuenta (el archivo se llama con el número de la cuenta);
    - **firma**: el contratista firma en el formulario (dedo, lápiz o mouse, o sube una imagen de su firma) y la firma
