@@ -9,6 +9,8 @@
  *
  * Formato que genera el formulario HTML:
  *   Asunto: Cuenta de Cobro – CC-2026-0007, CC-2026-0008 – NOMBRES APELLIDOS – 1032456789
+ *   (el número es libre: cada trabajador puede usar su propio prefijo, p. ej. JP-015. Una cuenta se
+ *   identifica por identificación + número, como una factura; el mismo número de dos personas no es duplicado)
  *   Cuerpo: termina con el bloque
  *     --- DATOS PARA REGISTRO AUTOMATICO (no modificar) ---
  *     TRABAJADOR|CC|1032456789|NOMBRE|2026-10-27|2026-10
@@ -35,7 +37,6 @@ const COLS_CUENTAS = [
 const COLS_REVISAR = ['Fecha recepción', 'Remitente', 'Asunto', 'Adjuntos PDF', 'Motivo', 'Enlace al correo', 'Revisado', 'ID mensaje'];
 
 const RE_ASUNTO = /^\s*(?:(?:re|rv|fw|fwd|tr)\s*:\s*)*cuenta de cobro\s+[–—-]\s+(.+?)\s+[–—-]\s+(.+?)\s+[–—-]\s+([A-Za-z0-9.\-]+)\s*$/i;
-const RE_NUMERO = /CC-\d{4}-\d{4}/gi;
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Cuentas de cobro')
@@ -116,7 +117,7 @@ function procesarCuentasCobro() {
 
 /** Convierte un correo con asunto válido en una fila por cuenta de cobro. */
 function filasDeMensaje_(msg, m, yaRegistradas) {
-  const asuntoNumeros = (m[1].match(RE_NUMERO) || []).map(n => n.toUpperCase());
+  const asuntoNumeros = m[1].split(/\s*[,;]\s*/).map(n => n.trim().toUpperCase()).filter(Boolean);
   const asuntoNombre = m[2].trim();
   const asuntoId = m[3].trim();
   const datos = leerBloque_(msg.getPlainBody());
@@ -134,8 +135,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     if (asuntoNumeros.length && asuntoNumeros.slice().sort().join(',') !== delCuerpo) obsGenerales.push('Los números del asunto no coinciden con los del cuerpo.');
   } else {
     // Sin bloque de datos: se registra igual a partir del asunto para no perder la cuenta.
-    const numeros = asuntoNumeros.length ? asuntoNumeros : [m[1].trim()];
-    cuentas = numeros.map(numero => ({ numero, servicios: '', gastos: '', total: '', cliente: '', evento: '' }));
+    cuentas = asuntoNumeros.map(numero => ({ numero, servicios: '', gastos: '', total: '', cliente: '', evento: '' }));
     obsGenerales.push('Sin bloque "DATOS PARA REGISTRO AUTOMATICO": completar valores, cliente y evento manualmente.');
   }
 
@@ -146,7 +146,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     yaRegistradas.add(llave);
     if (c.total !== '' && c.servicios !== '' && c.gastos !== '' && c.servicios + c.gastos !== c.total) obs.push('La suma de servicios y gastos no coincide con el total.');
 
-    const pdf = pdfs.find(a => a.getName().toUpperCase().indexOf(c.numero) >= 0);
+    const pdf = pdfs.find(a => !usados.has(a) && nombreContieneNumero_(a.getName(), c.numero));
     let celdaPdf = 'NO ADJUNTO';
     if (pdf) {
       usados.add(pdf);
@@ -187,6 +187,12 @@ function leerBloque_(texto) {
     }
   });
   return out;
+}
+
+/** El número debe aparecer como "palabra" completa: "15" no debe coincidir con "2015" ni "JP-15" con "JP-150". */
+function nombreContieneNumero_(nombre, numero) {
+  const escapado = numero.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^A-Z0-9])${escapado}([^A-Z0-9]|$)`, 'i').test(nombre);
 }
 
 function pdfsDe_(msg) {

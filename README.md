@@ -27,7 +27,13 @@ navegador con jsPDF (cargado desde cdnjs con verificación de integridad); si no
 
 1. Abrir el enlace de Vercel (o `vercel/index.html` en Chrome o Edge) y diligenciar los datos.
 2. En cada servicio se indica el **cliente** y el **evento**. Cada combinación distinta de cliente y evento genera
-   **una cuenta de cobro aparte con su propio número** (`CC-AAAA-NNNN`, a partir del consecutivo personal del trabajador).
+   **una cuenta de cobro aparte con su propio número**.
+   - Número = **prefijo** (libre; por defecto `CC-AAAA-`, o el que el contratista ya use, p. ej. `JP-`) + **consecutivo**
+     (respeta los ceros que escriba: `015` → `015`, `016`…). El navegador recuerda el prefijo y el último número.
+   - Como en las facturas, el número solo debe ser único **por persona**: una cuenta se identifica por
+     **identificación + número**. Que dos contratistas usen el mismo número no es un problema.
+   - El script no depende de la forma del número: detecta las cuentas por el asunto
+     (`Cuenta de Cobro – … – NOMBRE – IDENTIFICACIÓN`) y el bloque de datos del correo.
 3. **Validar y generar cuentas** muestra:
    - un botón **Descargar PDF** por cuenta (el archivo se llama con el número de la cuenta);
    - **firma**: el contratista firma en el formulario (dedo, lápiz o mouse, o sube una imagen de su firma) y la firma
