@@ -34,6 +34,10 @@ navegador con jsPDF (cargado desde cdnjs con verificación de integridad); si no
      **identificación + número**. Que dos contratistas usen el mismo número no es un problema.
    - El script no depende de la forma del número: detecta las cuentas por el asunto
      (`Cuenta de Cobro – … – NOMBRE – IDENTIFICACIÓN`) y el bloque de datos del correo.
+   - Cada servicio lleva un **tipo de actividad** (lista agrupada por línea de negocio, con **Otro** para lo que
+     no encaje) y una **descripción** obligatoria de lo que se hizo. La lista se edita en la constante
+     `TIPOS_ACTIVIDAD` al inicio del script de `vercel/index.html`. Los tipos llegan a la hoja de contabilidad
+     en la columna *Tipo de actividad*, útil para asignar el centro de costo.
 3. **Validar y generar cuentas** muestra:
    - un botón **Descargar PDF** por cuenta (el archivo se llama con el número de la cuenta);
    - **firma**: el contratista firma en el formulario (dedo, lápiz o mouse, o sube una imagen de su firma) y la firma

@@ -31,7 +31,7 @@ const CONFIG = {
 
 const COLS_CUENTAS = [
   'Fecha recepción', 'Remitente', 'N.º cuenta de cobro', 'Tipo doc.', 'Identificación', 'Nombre',
-  'Fecha emisión', 'Periodo', 'Cliente', 'Evento', 'Valor servicios', 'Valor gastos', 'Valor total',
+  'Fecha emisión', 'Periodo', 'Cliente', 'Evento', 'Tipo de actividad', 'Valor servicios', 'Valor gastos', 'Valor total',
   'PDF', 'Estado', 'Observaciones', 'Centro de costo', 'N.º documento soporte Siigo', 'Asunto', 'ID mensaje',
 ];
 const COLS_REVISAR = ['Fecha recepción', 'Remitente', 'Asunto', 'Adjuntos PDF', 'Motivo', 'Enlace al correo', 'Revisado', 'ID mensaje'];
@@ -135,7 +135,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     if (asuntoNumeros.length && asuntoNumeros.slice().sort().join(',') !== delCuerpo) obsGenerales.push('Los números del asunto no coinciden con los del cuerpo.');
   } else {
     // Sin bloque de datos: se registra igual a partir del asunto para no perder la cuenta.
-    cuentas = asuntoNumeros.map(numero => ({ numero, servicios: '', gastos: '', total: '', cliente: '', evento: '' }));
+    cuentas = asuntoNumeros.map(numero => ({ numero, servicios: '', gastos: '', total: '', cliente: '', evento: '', tipos: '' }));
     obsGenerales.push('Sin bloque "DATOS PARA REGISTRO AUTOMATICO": completar valores, cliente y evento manualmente.');
   }
 
@@ -157,7 +157,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     }
     return [
       msg.getDate(), msg.getFrom(), c.numero, trabajador.tipo, trabajador.id, trabajador.nombre,
-      trabajador.fecha, trabajador.periodo, c.cliente, c.evento, c.servicios, c.gastos, c.total,
+      trabajador.fecha, trabajador.periodo, c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
       celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), msg.getId(),
     ];
   });
@@ -178,14 +178,18 @@ function leerBloque_(texto) {
   const lineas = texto.slice(ini, fin < 0 ? undefined : fin).split(/\r?\n/).map(l => l.replace(/^[>\s]+/, '').trim());
   const num = v => (v === undefined || v === '' ? '' : Number(String(v).replace(/[^\d-]/g, '')));
   const out = { trabajador: null, cuentas: [] };
+  const tipos = {};
   lineas.forEach(l => {
     const p = l.split('|').map(x => x.trim());
     if (p[0] === 'TRABAJADOR' && p.length >= 6) {
       out.trabajador = { tipo: p[1], id: p[2], nombre: p[3], fecha: p[4], periodo: p[5] };
     } else if (p[0] === 'CUENTA' && p.length >= 7) {
       out.cuentas.push({ numero: p[1].toUpperCase(), servicios: num(p[2]), gastos: num(p[3]), total: num(p[4]), cliente: p[5], evento: p.slice(6).join(' ') });
+    } else if (p[0] === 'TIPOS' && p.length >= 3) {
+      tipos[p[1].toUpperCase()] = p.slice(2).join(' ');
     }
   });
+  out.cuentas.forEach(c => { c.tipos = tipos[c.numero] || ''; });
   return out;
 }
 
@@ -217,7 +221,17 @@ function hoja_(ss, nombre, columnas) {
     h.getRange(1, 1, 1, columnas.length).setValues([columnas]).setFontWeight('bold').setBackground('#17263d').setFontColor('#ffffff');
     h.setFrozenRows(1);
     h.hideColumns(columnas.length); // ID mensaje: uso interno
+    return h;
   }
+  // Hojas creadas con una versión anterior: se insertan las columnas nuevas en su posición
+  // para que las filas existentes y las nuevas queden alineadas.
+  const actuales = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
+  columnas.forEach((nombreCol, i) => {
+    if (actuales[i] === nombreCol || actuales.indexOf(nombreCol) >= 0) return;
+    h.insertColumnBefore(i + 1);
+    h.getRange(1, i + 1).setValue(nombreCol);
+    actuales.splice(i, 0, nombreCol);
+  });
   return h;
 }
 
