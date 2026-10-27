@@ -6,3 +6,6 @@
 
 # Vercel CLI
 .vercel/
+
+# Archivos fuente del logo (en la web solo se publica vercel/logo-binaria-blanco.png)
+Logo/
