@@ -38,7 +38,7 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 - Periodo por defecto (`periodoSugerido`): del día 1 al 10 el mes anterior (pico de cuentas del 1 al 5), luego el mes en curso.
 - Secciones: 1 identificación (prefijo + consecutivo, fecha emisión, ciudad, periodo) · 2 contratante (fijo) ·
   3 trabajador · 4 servicios · 5 gastos · 6 pago · 7 declaración y firma · 8 envío (aparece tras validar).
-- **Tipo de personal** (selector antes de la sección 1, recordado en `localStorage` `binaria_cc_modo`; el resto del
+- **Tipo de personal** (selector antes de la sección 1, **no se recuerda**: al cargar o con Nueva cuenta queda sin elegir; el resto del
   formulario se oculta hasta elegir): `temporal` (eventos BTL, lo descrito abajo) o `fijo` (filas desde/hasta sin
   horas, actividad de `TIPOS_FIJO`, cliente opcional, descripción, valor; **todas las filas = una sola cuenta**, llave
   `FIJO`, evento = "Servicios de <mes> de <año>", la fecha fin puede pasar al mes siguiente). `body[data-modo]`
