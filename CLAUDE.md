@@ -64,7 +64,7 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 - **Nombre del PDF:** `CuentaCobro_<NUMERO>_<NOMBRE>_<DOCUMENTO>.pdf` (el script lo usa para asociar el PDF).
 - **Correo:** botones Gmail (`mail.google.com/?view=cm`) y `mailto:`; en celular se destaca `mailto`. Los PDF se
   adjuntan a mano.
-- Borradores JSON (`version_esquema: '2.0'`, también lee '1.0'). Exportación JSON/CSV existe (`exportData`) pero **sin
+- Borradores JSON (`version_esquema: '2.0'`, también lee '1.0'). Al abrir uno, `avisoBorrador` propone el siguiente consecutivo si el número ya se generó en ese dispositivo y avisa si el periodo es de otro mes (reutilizar el borrador del mes anterior). Exportación JSON/CSV existe (`exportData`) pero **sin
   botones** por decisión del usuario (comentario en el código indica cómo reactivarlos).
 
 ## Contrato entre formulario y script (no romper)
