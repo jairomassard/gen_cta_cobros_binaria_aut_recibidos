@@ -81,6 +81,9 @@ TIPOS|numero|tipo1; tipo2
 Si se agregan campos, usar **líneas nuevas** (el parser ignora las desconocidas); no agregar columnas a `CUENTA`.
 
 ## Script de contabilidad (`apps-script/CuentasCobro.gs`)
+- **Planilla de seguridad social:** columna "Planilla seg. social" (`estadoPlanilla_`, `totalesMes_`,
+  `marcarPlanillasRecibidas_`). Tope `CONFIG.TOPE_PLANILLA` = `TOPE_PLANILLA` del formulario (1.750.000, sobre servicios
+  sin gastos, sumando todos los correos de identificación + periodo). Detecta la planilla por nombre de anexo.
 - Menú en la hoja; disparador cada hora; busca `subject:"Cuenta de Cobro"` de los últimos 7 días.
 - Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas". Los demás adjuntos (RUT, cédula, certificación bancaria del personal nuevo) se guardan como `ANEXO_<id>_<nombre>` y se listan en Observaciones de la primera fila del correo
   (asociado por el número como palabra completa en el nombre del archivo).

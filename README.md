@@ -78,6 +78,11 @@ Cada PDF incluye, al final de la descripción de la actividad, la nota:
   **centro de costo** y el **N.º de documento soporte de Siigo**.
 - **Anexos**: los adjuntos que no son una cuenta de cobro (RUT, cédula y certificación bancaria del personal nuevo,
   también fotos) se guardan en la misma carpeta de Drive como `ANEXO_<identificación>_<archivo>` y se listan en Observaciones.
+- **Planilla seg. social** (columna): suma los *servicios* (sin gastos) de cada identificación + periodo, en todos
+  sus correos. Si superan `CONFIG.TOPE_PLANILLA` (1.750.000) busca un anexo cuyo nombre diga planilla / PILA /
+  seguridad social / parafiscal / aportes: *No requerida*, *Adjunta*, *Revisar anexos* (hay anexos con otro nombre),
+  *FALTA*; contabilidad puede marcar *Verificada*. Si la planilla llega en un correo posterior, las filas anteriores
+  del periodo pasan a *Adjunta*. El formulario usa el mismo tope (`TOPE_PLANILLA`) para avisar al trabajador.
 - **Observaciones automáticas**: posibles duplicados (misma identificación y número), PDF faltante,
   totales que no cuadran, asunto y cuerpo que no coinciden, correo sin bloque de datos.
 - **Hoja "Por revisar"**: correos con PDF que mencionan "cuenta de cobro" pero no tienen el asunto estandarizado,

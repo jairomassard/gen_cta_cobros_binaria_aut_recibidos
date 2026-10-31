@@ -29,12 +29,17 @@ const CONFIG = {
   ETIQUETA_OK: 'Cuentas de cobro/Registrada',
   ETIQUETA_REVISAR: 'Cuentas de cobro/Por revisar',
   ESTADOS: ['Pendiente revisión', 'Verificada', 'Registrada en Siigo', 'Rechazada'],
+  // Planilla de seguridad social (PILA): se exige cuando los servicios del periodo (sin gastos), sumando todos los
+  // correos de la persona, superan este tope. Actualizarlo cuando cambie la regla (p. ej. cada año).
+  TOPE_PLANILLA: 1750000,
+  RE_PLANILLA: /planilla|pila|seguridad\s*social|parafiscal|aportes/i, // nombre de archivo que se toma como planilla
+  ESTADOS_PLANILLA: ['No requerida', 'Adjunta', 'Revisar anexos', 'FALTA', 'Verificada'],
 };
 
 const COLS_CUENTAS = [
   'Fecha recepción', 'Remitente', 'N.º cuenta de cobro', 'Tipo doc.', 'Identificación', 'Nombre',
   'Fecha emisión', 'Periodo', 'Tipo de personal', 'Cliente', 'Evento', 'Tipo de actividad', 'Valor servicios', 'Valor gastos', 'Valor total',
-  'PDF', 'Estado', 'Observaciones', 'Centro de costo', 'N.º documento soporte Siigo', 'Asunto', 'ID mensaje',
+  'Planilla seg. social', 'PDF', 'Estado', 'Observaciones', 'Centro de costo', 'N.º documento soporte Siigo', 'Asunto', 'ID mensaje',
 ];
 const COLS_REVISAR = ['Fecha recepción', 'Remitente', 'Asunto', 'Adjuntos PDF', 'Motivo', 'Enlace al correo', 'Revisado', 'ID mensaje'];
 
@@ -68,6 +73,7 @@ function procesarCuentasCobro() {
     const { hojaCuentas, hojaRevisar } = prepararHojas_();
     const procesados = idsProcesados_(hojaCuentas, hojaRevisar);
     const yaRegistradas = cuentasRegistradas_(hojaCuentas);
+    const mesTotales = totalesMes_(hojaCuentas);
     const etiquetaOk = etiqueta_(CONFIG.ETIQUETA_OK);
     const etiquetaRevisar = etiqueta_(CONFIG.ETIQUETA_REVISAR);
     const filasCuentas = [];
@@ -82,7 +88,7 @@ function procesarCuentasCobro() {
         if (procesados.has(msg.getId()) || esPropio(msg)) return;
         const m = msg.getSubject().match(RE_ASUNTO);
         if (!m) return; // se evalúa en el paso 2
-        const filas = filasDeMensaje_(msg, m, yaRegistradas);
+        const filas = filasDeMensaje_(msg, m, yaRegistradas, mesTotales);
         filas.forEach(f => filasCuentas.push(f));
         procesados.add(msg.getId());
         hilo.addLabel(etiquetaOk);
@@ -107,6 +113,7 @@ function procesarCuentasCobro() {
     });
 
     escribir_(hojaCuentas, filasCuentas);
+    marcarPlanillasRecibidas_(hojaCuentas, mesTotales);
     escribir_(hojaRevisar, filasRevisar);
     if (filasRevisar.length) hojaRevisar.getRange(hojaRevisar.getLastRow() - filasRevisar.length + 1, 7, filasRevisar.length, 1).insertCheckboxes();
     if (filasCuentas.length || filasRevisar.length) {
@@ -118,7 +125,7 @@ function procesarCuentasCobro() {
 }
 
 /** Convierte un correo con asunto válido en una fila por cuenta de cobro. */
-function filasDeMensaje_(msg, m, yaRegistradas) {
+function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
   const asuntoNumeros = m[1].split(/\s*[,;]\s*/).map(n => n.trim().toUpperCase()).filter(Boolean);
   const asuntoNombre = m[2].trim();
   const asuntoId = m[3].trim();
@@ -161,7 +168,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     return [
       msg.getDate(), msg.getFrom(), c.numero, trabajador.tipo, trabajador.id, trabajador.nombre,
       trabajador.fecha, trabajador.periodo, (datos && datos.modalidad) || '', c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
-      celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), msg.getId(),
+      '', celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), msg.getId(),
     ];
   });
 
@@ -173,7 +180,38 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     const col = COLS_CUENTAS.indexOf('Observaciones');
     filas[0][col] = [filas[0][col], `Anexos guardados en Drive (p. ej. RUT, cédula, certificación bancaria): ${anexos.map(a => a.getName()).join(', ')}`].filter(Boolean).join('\n');
   }
+  if (filas.length) estadoPlanilla_(filas, cuentas, trabajador, anexos, mesTotales, !!(datos && datos.cuentas.length));
   return filas;
+}
+
+/**
+ * Llena la columna "Planilla seg. social" de las filas del correo. Suma los servicios de la persona en el periodo
+ * (correos anteriores + este) y busca la planilla entre los anexos por el nombre del archivo.
+ */
+function estadoPlanilla_(filas, cuentas, trabajador, anexos, mesTotales, conValores) {
+  const llave = `${trabajador.id}|${trabajador.periodo}`;
+  const previo = mesTotales.get(llave) || { servicios: 0, planilla: false };
+  const acumulado = previo.servicios + cuentas.reduce((s, c) => s + (Number(c.servicios) || 0), 0);
+  const tiene = previo.planilla || anexos.some(a => CONFIG.RE_PLANILLA.test(a.getName()));
+  mesTotales.set(llave, { servicios: acumulado, planilla: tiene, llegoAhora: previo.llegoAhora || (tiene && !previo.planilla) });
+
+  let estado = 'No requerida';
+  if (!conValores) estado = ''; // sin bloque de datos no hay valores para calcular
+  else if (acumulado > CONFIG.TOPE_PLANILLA) {
+    estado = tiene ? 'Adjunta' : anexos.length ? 'Revisar anexos' : 'FALTA';
+    if (estado !== 'Adjunta') {
+      const col = COLS_CUENTAS.indexOf('Observaciones');
+      const aviso = `Los servicios del periodo ${trabajador.periodo} suman ${pesos_(acumulado)} (más de ${pesos_(CONFIG.TOPE_PLANILLA)}): se requiere la planilla de seguridad social.` +
+        (estado === 'Revisar anexos' ? ' Revisar si alguno de los anexos es la planilla y marcar "Verificada".' : '');
+      filas[0][col] = [filas[0][col], aviso].filter(Boolean).join('\n');
+    }
+  }
+  const colPlanilla = COLS_CUENTAS.indexOf('Planilla seg. social');
+  filas.forEach(f => { f[colPlanilla] = estado; });
+}
+
+function pesos_(n) {
+  return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 /** Lee el bloque estructurado del final del correo. Tolera respuestas citadas ("> "). */
@@ -226,6 +264,9 @@ function prepararHojas_() {
   const colEstado = COLS_CUENTAS.indexOf('Estado') + 1;
   const regla = SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.ESTADOS, true).build();
   hojaCuentas.getRange(2, colEstado, hojaCuentas.getMaxRows() - 1, 1).setDataValidation(regla);
+  const colPlanilla = COLS_CUENTAS.indexOf('Planilla seg. social') + 1;
+  const reglaPlanilla = SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.ESTADOS_PLANILLA, true).build();
+  hojaCuentas.getRange(2, colPlanilla, hojaCuentas.getMaxRows() - 1, 1).setDataValidation(reglaPlanilla);
   return { hojaCuentas, hojaRevisar };
 }
 
@@ -268,6 +309,50 @@ function cuentasRegistradas_(h) {
   const cId = COLS_CUENTAS.indexOf('Identificación');
   h.getRange(2, 1, ult - 1, COLS_CUENTAS.length).getValues().forEach(r => llaves.add(`${r[cId]}|${String(r[cNum]).toUpperCase()}`));
   return llaves;
+}
+
+/** Servicios ya registrados por identificación + periodo, y si en ese periodo ya llegó la planilla. */
+function totalesMes_(h) {
+  const totales = new Map();
+  const ult = h.getLastRow();
+  if (ult < 2) return totales;
+  const cId = COLS_CUENTAS.indexOf('Identificación');
+  const cPer = COLS_CUENTAS.indexOf('Periodo');
+  const cServ = COLS_CUENTAS.indexOf('Valor servicios');
+  const cPla = COLS_CUENTAS.indexOf('Planilla seg. social');
+  h.getRange(2, 1, ult - 1, COLS_CUENTAS.length).getValues().forEach(r => {
+    const llave = `${r[cId]}|${periodoTexto_(r[cPer])}`;
+    const t = totales.get(llave) || { servicios: 0, planilla: false };
+    t.servicios += Number(r[cServ]) || 0;
+    t.planilla = t.planilla || r[cPla] === 'Adjunta' || r[cPla] === 'Verificada';
+    totales.set(llave, t);
+  });
+  return totales;
+}
+
+/** Si la planilla llegó en un correo posterior, las filas del mismo periodo que decían que faltaba pasan a "Adjunta". */
+function marcarPlanillasRecibidas_(h, mesTotales) {
+  const llegaron = [...mesTotales].filter(([, t]) => t.llegoAhora).map(([llave]) => llave);
+  const ult = h.getLastRow();
+  if (!llegaron.length || ult < 2) return;
+  const cId = COLS_CUENTAS.indexOf('Identificación');
+  const cPer = COLS_CUENTAS.indexOf('Periodo');
+  const cPla = COLS_CUENTAS.indexOf('Planilla seg. social');
+  const rango = h.getRange(2, cPla + 1, ult - 1, 1);
+  const estados = rango.getValues();
+  let cambios = 0;
+  h.getRange(2, 1, ult - 1, COLS_CUENTAS.length).getValues().forEach((r, i) => {
+    if ((r[cPla] === 'FALTA' || r[cPla] === 'Revisar anexos') && llegaron.indexOf(`${r[cId]}|${periodoTexto_(r[cPer])}`) >= 0) {
+      estados[i][0] = 'Adjunta';
+      cambios++;
+    }
+  });
+  if (cambios) rango.setValues(estados);
+}
+
+/** Sheets puede convertir "2026-10" en fecha al guardarlo: se vuelve a texto AAAA-MM para comparar. */
+function periodoTexto_(v) {
+  return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM') : String(v);
 }
 
 function escribir_(h, filas) {
