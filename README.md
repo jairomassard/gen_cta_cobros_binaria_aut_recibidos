@@ -76,7 +76,9 @@ Cada PDF incluye, al final de la descripción de la actividad, la nota:
   (guardado en la carpeta de Drive "Cuentas de cobro recibidas"), **Estado** (Pendiente revisión / Verificada /
   Registrada en Siigo / Rechazada), **Observaciones**, y columnas para que la auxiliar contable diligencie el
   **centro de costo** y el **N.º de documento soporte de Siigo**.
-- **Observaciones automáticas**: posibles duplicados (misma identificación y número), PDF faltante o sin asociar,
+- **Anexos**: los adjuntos que no son una cuenta de cobro (RUT, cédula y certificación bancaria del personal nuevo,
+  también fotos) se guardan en la misma carpeta de Drive como `ANEXO_<identificación>_<archivo>` y se listan en Observaciones.
+- **Observaciones automáticas**: posibles duplicados (misma identificación y número), PDF faltante,
   totales que no cuadran, asunto y cuerpo que no coinciden, correo sin bloque de datos.
 - **Hoja "Por revisar"**: correos con PDF que mencionan "cuenta de cobro" pero no tienen el asunto estandarizado,
   para que ninguna cuenta se quede sin registrar.

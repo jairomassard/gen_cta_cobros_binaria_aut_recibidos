@@ -123,7 +123,8 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
   const asuntoNombre = m[2].trim();
   const asuntoId = m[3].trim();
   const datos = leerBloque_(msg.getPlainBody());
-  const pdfs = pdfsDe_(msg);
+  const adjuntos = msg.getAttachments({ includeInlineImages: false });
+  const pdfs = adjuntos.filter(esPdf_);
   const usados = new Set();
   const obsGenerales = [];
 
@@ -164,10 +165,13 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     ];
   });
 
-  const sobrantes = pdfs.filter(a => !usados.has(a));
-  if (sobrantes.length && filas.length) {
+  // Los demás adjuntos (RUT, cédula, certificación bancaria del personal nuevo, o una cuenta con el nombre cambiado)
+  // se guardan en Drive como anexos y se listan en la primera fila del correo.
+  const anexos = adjuntos.filter(a => !usados.has(a));
+  if (anexos.length && filas.length) {
+    anexos.forEach(a => carpetaPdf_().createFile(a.copyBlob()).setName(`ANEXO_${trabajador.id}_${a.getName()}`));
     const col = COLS_CUENTAS.indexOf('Observaciones');
-    filas[0][col] = [filas[0][col], `PDF adjuntos sin asociar: ${sobrantes.map(a => a.getName()).join(', ')}`].filter(Boolean).join('\n');
+    filas[0][col] = [filas[0][col], `Anexos guardados en Drive (p. ej. RUT, cédula, certificación bancaria): ${anexos.map(a => a.getName()).join(', ')}`].filter(Boolean).join('\n');
   }
   return filas;
 }
@@ -203,9 +207,12 @@ function nombreContieneNumero_(nombre, numero) {
   return new RegExp(`(^|[^A-Z0-9])${escapado}([^A-Z0-9]|$)`, 'i').test(nombre);
 }
 
+function esPdf_(a) {
+  return a.getContentType() === 'application/pdf' || /\.pdf$/i.test(a.getName());
+}
+
 function pdfsDe_(msg) {
-  return msg.getAttachments({ includeInlineImages: false })
-    .filter(a => a.getContentType() === 'application/pdf' || /\.pdf$/i.test(a.getName()));
+  return msg.getAttachments({ includeInlineImages: false }).filter(esPdf_);
 }
 
 function prepararHojas_() {

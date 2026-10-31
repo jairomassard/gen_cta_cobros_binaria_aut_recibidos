@@ -82,7 +82,7 @@ Si se agregan campos, usar **líneas nuevas** (el parser ignora las desconocidas
 
 ## Script de contabilidad (`apps-script/CuentasCobro.gs`)
 - Menú en la hoja; disparador cada hora; busca `subject:"Cuenta de Cobro"` de los últimos 7 días.
-- Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas"
+- Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas". Los demás adjuntos (RUT, cédula, certificación bancaria del personal nuevo) se guardan como `ANEXO_<id>_<nombre>` y se listan en Observaciones de la primera fila del correo
   (asociado por el número como palabra completa en el nombre del archivo).
 - Observaciones automáticas: posible duplicado (misma identificación + número), PDF faltante o sobrante, totales que no
   cuadran, asunto y cuerpo que no coinciden, correo sin bloque.
