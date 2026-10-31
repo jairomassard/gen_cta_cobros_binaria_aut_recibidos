@@ -35,6 +35,7 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 7. Script en Google Sheets que cargue las cuentas a medida que llegan.
 
 ## Cómo funciona el formulario (`vercel/index.html`)
+- Periodo por defecto (`periodoSugerido`): del día 1 al 10 el mes anterior (pico de cuentas del 1 al 5), luego el mes en curso.
 - Secciones: 1 identificación (prefijo + consecutivo, fecha emisión, ciudad, periodo) · 2 contratante (fijo) ·
   3 trabajador · 4 servicios · 5 gastos · 6 pago · 7 declaración y firma · 8 envío (aparece tras validar).
 - **Tipo de personal** (selector antes de la sección 1, recordado en `localStorage` `binaria_cc_modo`; el resto del
