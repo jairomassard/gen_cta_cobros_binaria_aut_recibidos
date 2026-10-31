@@ -26,7 +26,14 @@ navegador con jsPDF (cargado desde cdnjs con verificación de integridad); si no
 
 ## Cómo funciona el formulario (trabajadores)
 
-1. Abrir el enlace de Vercel (o `vercel/index.html` en Chrome o Edge) y diligenciar los datos.
+1. Abrir el enlace de Vercel (o `vercel/index.html` en Chrome o Edge) y elegir el **tipo de personal**:
+   - **Temporal · eventos BTL**: lo que se describe en el punto 2 (eventos con cliente, evento y horarios).
+   - **Fijo · servicios mensuales** (diseño, community management, ejecutivos de cuenta, asesoría RR. HH., etc.):
+     filas con rango de fechas desde / hasta (por defecto el mes del periodo), actividad o cargo (constante
+     `TIPOS_FIJO`), cliente o proyecto opcional, descripción y valor, **sin horarios**. Todas las filas forman
+     **una sola cuenta de cobro**; el campo *Evento* de la hoja queda como "Servicios de <mes> de <año>".
+   El correo incluye la línea `MODALIDAD|Fijo` o `MODALIDAD|Temporal eventos BTL`, que llega a la columna
+   *Tipo de personal* de la hoja.
 2. En cada servicio se indica el **cliente** y el **evento**. Cada combinación distinta de cliente y evento genera
    **una cuenta de cobro aparte con su propio número**.
    - Número = **prefijo** (libre; por defecto `CC-AAAA-`, o el que el contratista ya use, p. ej. `JP-`) + **consecutivo**

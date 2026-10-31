@@ -37,7 +37,13 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 ## Cómo funciona el formulario (`vercel/index.html`)
 - Secciones: 1 identificación (prefijo + consecutivo, fecha emisión, ciudad, periodo) · 2 contratante (fijo) ·
   3 trabajador · 4 servicios · 5 gastos · 6 pago · 7 declaración y firma · 8 envío (aparece tras validar).
-- **Agrupación:** servicios con el mismo `cliente + evento` (normalizado: mayúsculas, espacios) = una cuenta. Gastos se
+- **Tipo de personal** (selector antes de la sección 1, recordado en `localStorage` `binaria_cc_modo`; el resto del
+  formulario se oculta hasta elegir): `temporal` (eventos BTL, lo descrito abajo) o `fijo` (filas desde/hasta sin
+  horas, actividad de `TIPOS_FIJO`, cliente opcional, descripción, valor; **todas las filas = una sola cuenta**, llave
+  `FIJO`, evento = "Servicios de <mes> de <año>", la fecha fin puede pasar al mes siguiente). `body[data-modo]`
+  controla la visibilidad; `servTabla`/`descPairs`/`descTexto`/`concepto` arman el PDF y la hoja imprimible por modo.
+  Cambiar de modo borra la sección 4. El borrador guarda `general.modalidad` (sin ella = temporal).
+- **Agrupación (temporal):** servicios con el mismo `cliente + evento` (normalizado: mayúsculas, espacios) = una cuenta. Gastos se
   asignan a una cuenta con un select.
 - **Numeración:** `prefijo` libre (por defecto `CC-AAAA-`, letras/números/`.-_`, sin espacios) + `consecutivo` que
   conserva los ceros a la izquierda (`015` → `015`, `016`). Se recuerda en `localStorage` (`binaria_cc_numeracion`).
@@ -66,6 +72,7 @@ Bloque al final del cuerpo:
 ```
 --- DATOS PARA REGISTRO AUTOMATICO (no modificar) ---
 TRABAJADOR|tipoDoc|identificación|NOMBRE|fecha_emisión|periodo
+MODALIDAD|Temporal eventos BTL   (o Fijo; columna "Tipo de personal")
 CUENTA|numero|valor_servicios|valor_gastos|total|cliente|evento
 TIPOS|numero|tipo1; tipo2
 --- FIN DATOS ---
@@ -98,7 +105,8 @@ jspdf/autotable descargados de cdnjs; simular el canvas de firma (`getContext`/`
 - No subir el `.docx` ni la carpeta `Logo/` (repo público).
 
 ## Pendientes / preguntas abiertas
-- Confirmar si el Apps Script ya está instalado en contabilidad@ y con la última versión (columna "Tipo de actividad").
+- Confirmar si el Apps Script ya está instalado en contabilidad@ y con la última versión (columnas "Tipo de actividad" y "Tipo de personal").
+- Revisar con el equipo la lista `TIPOS_FIJO` (propuesta inicial) y si el personal fijo debe separar cuentas por cliente.
 - Prueba real desde celular (firma con el dedo, descarga del PDF, `mailto`) y envío de un correo de prueba end-to-end.
 - Instructivo: confirmar con el usuario la política ante errores ya enviados (hoy dice "avisa a contabilidad") y el
   correo de contacto para dudas (hoy contabilidad@binariamedia.co).

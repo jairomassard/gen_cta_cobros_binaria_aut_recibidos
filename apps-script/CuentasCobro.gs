@@ -14,7 +14,9 @@
  *   Cuerpo: termina con el bloque
  *     --- DATOS PARA REGISTRO AUTOMATICO (no modificar) ---
  *     TRABAJADOR|CC|1032456789|NOMBRE|2026-10-27|2026-10
+ *     MODALIDAD|Temporal eventos BTL      (o "Fijo"; correos anteriores no traen esta línea)
  *     CUENTA|CC-2026-0007|270000|0|270000|Cliente|Evento
+ *     TIPOS|CC-2026-0007|Tipo 1; Tipo 2
  *     --- FIN DATOS ---
  *   Adjuntos: un PDF por cuenta, con el número de la cuenta en el nombre del archivo.
  */
@@ -31,7 +33,7 @@ const CONFIG = {
 
 const COLS_CUENTAS = [
   'Fecha recepción', 'Remitente', 'N.º cuenta de cobro', 'Tipo doc.', 'Identificación', 'Nombre',
-  'Fecha emisión', 'Periodo', 'Cliente', 'Evento', 'Tipo de actividad', 'Valor servicios', 'Valor gastos', 'Valor total',
+  'Fecha emisión', 'Periodo', 'Tipo de personal', 'Cliente', 'Evento', 'Tipo de actividad', 'Valor servicios', 'Valor gastos', 'Valor total',
   'PDF', 'Estado', 'Observaciones', 'Centro de costo', 'N.º documento soporte Siigo', 'Asunto', 'ID mensaje',
 ];
 const COLS_REVISAR = ['Fecha recepción', 'Remitente', 'Asunto', 'Adjuntos PDF', 'Motivo', 'Enlace al correo', 'Revisado', 'ID mensaje'];
@@ -157,7 +159,7 @@ function filasDeMensaje_(msg, m, yaRegistradas) {
     }
     return [
       msg.getDate(), msg.getFrom(), c.numero, trabajador.tipo, trabajador.id, trabajador.nombre,
-      trabajador.fecha, trabajador.periodo, c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
+      trabajador.fecha, trabajador.periodo, (datos && datos.modalidad) || '', c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
       celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), msg.getId(),
     ];
   });
@@ -177,12 +179,14 @@ function leerBloque_(texto) {
   const fin = texto.indexOf('--- FIN DATOS ---', ini);
   const lineas = texto.slice(ini, fin < 0 ? undefined : fin).split(/\r?\n/).map(l => l.replace(/^[>\s]+/, '').trim());
   const num = v => (v === undefined || v === '' ? '' : Number(String(v).replace(/[^\d-]/g, '')));
-  const out = { trabajador: null, cuentas: [] };
+  const out = { trabajador: null, modalidad: '', cuentas: [] };
   const tipos = {};
   lineas.forEach(l => {
     const p = l.split('|').map(x => x.trim());
     if (p[0] === 'TRABAJADOR' && p.length >= 6) {
       out.trabajador = { tipo: p[1], id: p[2], nombre: p[3], fecha: p[4], periodo: p[5] };
+    } else if (p[0] === 'MODALIDAD' && p.length >= 2) {
+      out.modalidad = p[1];
     } else if (p[0] === 'CUENTA' && p.length >= 7) {
       out.cuentas.push({ numero: p[1].toUpperCase(), servicios: num(p[2]), gastos: num(p[3]), total: num(p[4]), cliente: p[5], evento: p.slice(6).join(' ') });
     } else if (p[0] === 'TIPOS' && p.length >= 3) {
