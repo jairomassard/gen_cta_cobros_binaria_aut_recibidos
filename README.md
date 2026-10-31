@@ -48,7 +48,7 @@ navegador con jsPDF (cargado desde cdnjs con verificación de integridad); si no
      en la columna *Tipo de actividad*, útil para asignar el centro de costo.
    - **Fechas:** una fila por evento. Varios días seguidos con el mismo horario → fecha de inicio y de fin en una
      fila (horas = horas por día × días; el valor es el total de la fila). Un día con otro horario → otra fila
-     (botón **Duplicar al día siguiente**). Una fila no puede salirse del periodo cobrado.
+     (botón **Duplicar al día siguiente**). La fecha de inicio debe estar en el periodo cobrado; la de fin puede caer en el mes siguiente (el evento se cobra en el mes en que empieza).
 3. **Validar y generar cuentas** muestra:
    - un botón **Descargar PDF** por cuenta (el archivo se llama con el número de la cuenta);
    - **firma**: el contratista firma en el formulario (dedo, lápiz o mouse, o sube una imagen de su firma) y la firma

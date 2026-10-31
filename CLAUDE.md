@@ -41,7 +41,7 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 - **Tipo de personal** (selector antes de la sección 1, **no se recuerda**: al cargar o con Nueva cuenta queda sin elegir; el resto del
   formulario se oculta hasta elegir): `temporal` (eventos BTL, lo descrito abajo) o `fijo` (filas desde/hasta sin
   horas, actividad de `TIPOS_FIJO`, cliente opcional, descripción, valor; **todas las filas = una sola cuenta**, llave
-  `FIJO`, evento = "Servicios de <mes> de <año>", la fecha fin puede pasar al mes siguiente). `body[data-modo]`
+  `FIJO`, evento = "Servicios de <mes> de <año>", la fecha fin puede pasar al mes siguiente, igual que en temporal). `body[data-modo]`
   controla la visibilidad; `servTabla`/`descPairs`/`descTexto`/`concepto` arman el PDF y la hoja imprimible por modo.
   Cambiar de modo borra la sección 4. El borrador guarda `general.modalidad` (sin ella = temporal).
 - **Agrupación (temporal):** servicios con el mismo `cliente + evento` (normalizado: mayúsculas, espacios) = una cuenta. Gastos se
@@ -49,7 +49,7 @@ Google Sheet sin que se pierda ninguna. El usuario (Jairo Massard) es líder de 
 - **Numeración:** `prefijo` libre (por defecto `CC-AAAA-`, letras/números/`.-_`, sin espacios) + `consecutivo` que
   conserva los ceros a la izquierda (`015` → `015`, `016`). Se recuerda en `localStorage` (`binaria_cc_numeracion`).
   Unicidad = **identificación + número** (como factura); el mismo número entre personas distintas no es duplicado.
-- **Servicio:** fecha inicio y fin opcional (rango ≤ 31 días, mismo horario diario, dentro del periodo), cliente,
+- **Servicio:** fecha inicio y fin opcional (rango ≤ 31 días, mismo horario diario; el inicio debe estar en el periodo y el fin puede caer en el mes siguiente: un evento se cobra en el mes en que empieza), cliente,
   evento, **tipo de actividad** (constante `TIPOS_ACTIVIDAD`, agrupada por línea de negocio, con `Otro`),
   **descripción** obligatoria (≥ 10 caracteres), horas inicio/fin, descanso, valor total de la fila.
   Botón **Duplicar al día siguiente**. Horas totales = horas por día × días.
