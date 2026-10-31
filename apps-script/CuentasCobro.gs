@@ -212,6 +212,10 @@ function prepararHojas_() {
   const ss = SpreadsheetApp.getActive();
   const hojaCuentas = hoja_(ss, CONFIG.HOJA_CUENTAS, COLS_CUENTAS);
   const hojaRevisar = hoja_(ss, CONFIG.HOJA_REVISAR, COLS_REVISAR);
+  // Primera instalación: se borra la hoja en blanco que trae toda Google Sheet nueva ("Hoja 1" / "Sheet1").
+  ss.getSheets()
+    .filter(h => /^(hoja|sheet)\s*1$/i.test(h.getName()) && h.getLastRow() === 0 && h.getLastColumn() === 0)
+    .forEach(h => ss.deleteSheet(h));
   const colEstado = COLS_CUENTAS.indexOf('Estado') + 1;
   const regla = SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.ESTADOS, true).build();
   hojaCuentas.getRange(2, colEstado, hojaCuentas.getMaxRows() - 1, 1).setDataValidation(regla);

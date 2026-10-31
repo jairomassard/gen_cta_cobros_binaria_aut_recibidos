@@ -105,7 +105,8 @@ jspdf/autotable descargados de cdnjs; simular el canvas de firma (`getContext`/`
 - No subir el `.docx` ni la carpeta `Logo/` (repo público).
 
 ## Pendientes / preguntas abiertas
-- Confirmar si el Apps Script ya está instalado en contabilidad@ y con la última versión (columnas "Tipo de actividad" y "Tipo de personal").
+- Instalar el Apps Script: al 2026-10-31 la Google Sheet **aún no existe**. contabilidad@binariamedia.co será el buzón
+  principal. El script crea solo todo lo necesario la primera vez (hojas, columnas, carpeta, etiquetas). Pasos en README.
 - Revisar con el equipo la lista `TIPOS_FIJO` (propuesta inicial) y si el personal fijo debe separar cuentas por cliente.
 - Prueba real desde celular (firma con el dedo, descarga del PDF, `mailto`) y envío de un correo de prueba end-to-end.
 - Instructivo: confirmar con el usuario la política ante errores ya enviados (hoy dice "avisa a contabilidad") y el
