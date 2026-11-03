@@ -396,8 +396,9 @@ function etiqueta_(nombre) {
 }
 
 /**
- * Carpeta de los PDF y anexos: se crea junto a la Google Sheet (en la misma carpeta de Drive), para que el equipo
- * contable la encuentre fácil. Si ya existía en otro lugar (versiones anteriores la creaban en "Mi unidad"), se mueve.
+ * Carpeta de los PDF y anexos: se crea junto a la Google Sheet (en la misma carpeta de Drive, también si es una unidad
+ * compartida), para que el equipo contable la encuentre fácil. Si la guardada está en otro lugar (versiones anteriores
+ * la creaban en "Mi unidad") se crea una nueva junto a la hoja: un script no puede mover carpetas a una unidad compartida.
  */
 let carpetaCache_ = null;
 function carpetaPdf_() {
@@ -409,13 +410,11 @@ function carpetaPdf_() {
   let carpeta = null;
   if (id) {
     try { carpeta = DriveApp.getFolderById(id); } catch (e) { /* la carpeta fue borrada: se crea de nuevo */ }
-    if (carpeta && carpeta.isTrashed()) carpeta = null;
+    if (carpeta && (carpeta.isTrashed() || !enCarpeta_(carpeta, destino))) carpeta = null;
   }
   if (!carpeta) {
     carpeta = destino.createFolder(CONFIG.CARPETA_PDF);
     props.setProperty('CARPETA_PDF_ID', carpeta.getId());
-  } else if (!enCarpeta_(carpeta, destino)) {
-    carpeta.moveTo(destino);
   }
   carpetaCache_ = carpeta;
   return carpeta;
