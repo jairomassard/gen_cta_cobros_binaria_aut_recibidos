@@ -395,13 +395,34 @@ function etiqueta_(nombre) {
   return GmailApp.getUserLabelByName(nombre) || GmailApp.createLabel(nombre);
 }
 
+/**
+ * Carpeta de los PDF y anexos: se crea junto a la Google Sheet (en la misma carpeta de Drive), para que el equipo
+ * contable la encuentre fácil. Si ya existía en otro lugar (versiones anteriores la creaban en "Mi unidad"), se mueve.
+ */
+let carpetaCache_ = null;
 function carpetaPdf_() {
+  if (carpetaCache_) return carpetaCache_;
   const props = PropertiesService.getScriptProperties();
   const id = props.getProperty('CARPETA_PDF_ID');
+  const padres = DriveApp.getFileById(SpreadsheetApp.getActive().getId()).getParents();
+  const destino = padres.hasNext() ? padres.next() : DriveApp.getRootFolder();
+  let carpeta = null;
   if (id) {
-    try { return DriveApp.getFolderById(id); } catch (e) { /* la carpeta fue borrada: se crea de nuevo */ }
+    try { carpeta = DriveApp.getFolderById(id); } catch (e) { /* la carpeta fue borrada: se crea de nuevo */ }
+    if (carpeta && carpeta.isTrashed()) carpeta = null;
   }
-  const carpeta = DriveApp.createFolder(CONFIG.CARPETA_PDF);
-  props.setProperty('CARPETA_PDF_ID', carpeta.getId());
+  if (!carpeta) {
+    carpeta = destino.createFolder(CONFIG.CARPETA_PDF);
+    props.setProperty('CARPETA_PDF_ID', carpeta.getId());
+  } else if (!enCarpeta_(carpeta, destino)) {
+    carpeta.moveTo(destino);
+  }
+  carpetaCache_ = carpeta;
   return carpeta;
+}
+
+function enCarpeta_(carpeta, destino) {
+  const padres = carpeta.getParents();
+  while (padres.hasNext()) if (padres.next().getId() === destino.getId()) return true;
+  return false;
 }

@@ -88,7 +88,7 @@ Si se agregan campos, usar **líneas nuevas** (el parser ignora las desconocidas
   (2026/11/01). La red de seguridad ("Por revisar") solo mira asunto (cuenta + cobro), nombre del adjunto (cobro) o el
   bloque del formulario: buscar "cuenta de cobro" en todo el texto metía facturas y órdenes de compra de clientes (Inchcape).
 - Número, identificación, periodo e ID mensaje se escriben como texto (`texto_`) para que Sheets no los convierta.
-- Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas". Los demás adjuntos (RUT, cédula, certificación bancaria del personal nuevo) se guardan como `ANEXO_<id>_<nombre>` y se listan en Observaciones de la primera fila del correo
+- Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas" (creada junto a la Google Sheet; si existía en otro lugar, `carpetaPdf_` la mueve). Los demás adjuntos (RUT, cédula, certificación bancaria del personal nuevo) se guardan como `ANEXO_<id>_<nombre>` y se listan en Observaciones de la primera fila del correo
   (asociado por el número como palabra completa en el nombre del archivo).
 - Observaciones automáticas: posible duplicado (misma identificación + número), PDF faltante o sobrante, totales que no
   cuadran, asunto y cuerpo que no coinciden, correo sin bloque.
