@@ -89,6 +89,8 @@ Si se agregan campos, usar **líneas nuevas** (el parser ignora las desconocidas
   (asociado por el número como palabra completa en el nombre del archivo).
 - Observaciones automáticas: posible duplicado (misma identificación + número), PDF faltante o sobrante, totales que no
   cuadran, asunto y cuerpo que no coinciden, correo sin bloque.
+- Asunto sin formato pero con el bloque de datos completo en el cuerpo (`asuntoDesdeBloque_`): se registra igual con
+  la observación "El asunto del correo no tiene el formato estándar" (caso real: alguien pegó el texto en el asunto).
 - Hoja "Por revisar": correos con PDF que mencionan "cuenta de cobro" sin el asunto estándar.
 - Etiquetas Gmail `Cuentas de cobro/Registrada` y `Cuentas de cobro/Por revisar`; ignora correos de la propia cuenta.
 - `hoja_()` migra hojas existentes insertando columnas nuevas en su posición. "ID mensaje" debe ser siempre la última columna.

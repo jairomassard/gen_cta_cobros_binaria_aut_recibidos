@@ -86,7 +86,7 @@ function procesarCuentasCobro() {
     GmailApp.search(consultaAsunto).forEach(hilo => {
       hilo.getMessages().forEach(msg => {
         if (procesados.has(msg.getId()) || esPropio(msg)) return;
-        const m = msg.getSubject().match(RE_ASUNTO);
+        const m = msg.getSubject().match(RE_ASUNTO) || asuntoDesdeBloque_(msg);
         if (!m) return; // se evalúa en el paso 2
         const filas = filasDeMensaje_(msg, m, yaRegistradas, mesTotales);
         filas.forEach(f => filasCuentas.push(f));
@@ -100,6 +100,13 @@ function procesarCuentasCobro() {
     GmailApp.search(consultaAmplia).forEach(hilo => {
       hilo.getMessages().forEach(msg => {
         if (procesados.has(msg.getId()) || esPropio(msg)) return;
+        const m = asuntoDesdeBloque_(msg);
+        if (m) {
+          filasDeMensaje_(msg, m, yaRegistradas, mesTotales).forEach(f => filasCuentas.push(f));
+          procesados.add(msg.getId());
+          hilo.addLabel(etiquetaOk);
+          return;
+        }
         const pdfs = pdfsDe_(msg);
         if (!pdfs.length) return;
         filasRevisar.push([
@@ -134,6 +141,7 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
   const pdfs = adjuntos.filter(esPdf_);
   const usados = new Set();
   const obsGenerales = [];
+  if (m.desdeCuerpo) obsGenerales.push('El asunto del correo no tiene el formato estándar: se registró con los datos del cuerpo.');
 
   let cuentas;
   let trabajador = { tipo: '', id: asuntoId, nombre: asuntoNombre, fecha: '', periodo: '' };
@@ -212,6 +220,18 @@ function estadoPlanilla_(filas, cuentas, trabajador, anexos, mesTotales, conValo
 
 function pesos_(n) {
   return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/**
+ * Si el asunto no tiene el formato (p. ej. la persona pegó el texto del correo en el asunto) pero el cuerpo trae el
+ * bloque de datos completo, se arma el equivalente del asunto con esos datos para no mandar el correo a "Por revisar".
+ */
+function asuntoDesdeBloque_(msg) {
+  const datos = leerBloque_(msg.getPlainBody());
+  if (!datos || !datos.trabajador || !datos.cuentas.length) return null;
+  const m = ['', datos.cuentas.map(c => c.numero).join(', '), datos.trabajador.nombre, datos.trabajador.id];
+  m.desdeCuerpo = true;
+  return m;
 }
 
 /** Lee el bloque estructurado del final del correo. Tolera respuestas citadas ("> "). */

@@ -85,6 +85,8 @@ Cada PDF incluye, al final de la descripción de la actividad, la nota:
   del periodo pasan a *Adjunta*. El formulario usa el mismo tope (`TOPE_PLANILLA`) para avisar al trabajador.
 - **Observaciones automáticas**: posibles duplicados (misma identificación y número), PDF faltante,
   totales que no cuadran, asunto y cuerpo que no coinciden, correo sin bloque de datos.
+- Si el asunto no tiene el formato pero el cuerpo trae el bloque de datos completo, las cuentas se registran igual
+  (con una observación). Solo sin bloque válido el correo va a "Por revisar".
 - **Hoja "Por revisar"**: correos con PDF que mencionan "cuenta de cobro" pero no tienen el asunto estandarizado,
   para que ninguna cuenta se quede sin registrar.
 - Etiqueta los correos en Gmail como `Cuentas de cobro/Registrada` o `Cuentas de cobro/Por revisar`.
