@@ -26,6 +26,7 @@ const CONFIG = {
   HOJA_REVISAR: 'Por revisar',
   CARPETA_PDF: 'Cuentas de cobro recibidas', // carpeta de Drive donde se guardan los PDF
   DIAS_BUSQUEDA: 7,                          // ventana de búsqueda en Gmail en cada ejecución
+  FECHA_INICIO: '2026/11/01',                // no se procesan correos anteriores al inicio del sistema (AAAA/MM/DD)
   ETIQUETA_OK: 'Cuentas de cobro/Registrada',
   ETIQUETA_REVISAR: 'Cuentas de cobro/Por revisar',
   ESTADOS: ['Pendiente revisión', 'Verificada', 'Registrada en Siigo', 'Rechazada'],
@@ -82,7 +83,8 @@ function procesarCuentasCobro() {
     const esPropio = msg => msg.getFrom().toLowerCase().indexOf(propio) >= 0;
 
     // 1) Correos con el asunto estandarizado.
-    const consultaAsunto = `subject:"Cuenta de Cobro" newer_than:${CONFIG.DIAS_BUSQUEDA}d`;
+    const ventana = `newer_than:${CONFIG.DIAS_BUSQUEDA}d after:${CONFIG.FECHA_INICIO}`;
+    const consultaAsunto = `subject:"Cuenta de Cobro" ${ventana}`;
     GmailApp.search(consultaAsunto).forEach(hilo => {
       hilo.getMessages().forEach(msg => {
         if (procesados.has(msg.getId()) || esPropio(msg)) return;
@@ -95,8 +97,10 @@ function procesarCuentasCobro() {
       });
     });
 
-    // 2) Red de seguridad: correos que parecen cuentas de cobro pero no cumplen el formato.
-    const consultaAmplia = `has:attachment filename:pdf ("cuenta de cobro" OR "cuentas de cobro" OR "cuenta cobro") newer_than:${CONFIG.DIAS_BUSQUEDA}d -in:sent`;
+    // 2) Red de seguridad: correos que parecen cuentas de cobro pero no cumplen el formato. Solo cuenta lo que dice el
+    //    asunto, el nombre del adjunto o el bloque del formulario: si se buscara "cuenta de cobro" en todo el texto,
+    //    entrarían facturas y órdenes de compra de clientes que lo mencionan.
+    const consultaAmplia = `has:attachment ("DATOS PARA REGISTRO AUTOMATICO" OR subject:(cuenta cobro) OR subject:(cuentas cobro) OR filename:cobro OR filename:cuentacobro) ${ventana} -in:sent`;
     GmailApp.search(consultaAmplia).forEach(hilo => {
       hilo.getMessages().forEach(msg => {
         if (procesados.has(msg.getId()) || esPropio(msg)) return;
@@ -174,9 +178,9 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
       obs.push('No se encontró un PDF con el número de la cuenta en el nombre del archivo.');
     }
     return [
-      msg.getDate(), msg.getFrom(), c.numero, trabajador.tipo, trabajador.id, trabajador.nombre,
-      trabajador.fecha, trabajador.periodo, (datos && datos.modalidad) || '', c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
-      '', celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), msg.getId(),
+      msg.getDate(), msg.getFrom(), texto_(c.numero), trabajador.tipo, texto_(trabajador.id), trabajador.nombre,
+      trabajador.fecha, texto_(trabajador.periodo), (datos && datos.modalidad) || '', c.cliente, c.evento, c.tipos, c.servicios, c.gastos, c.total,
+      '', celdaPdf, CONFIG.ESTADOS[0], obs.join('\n'), '', '', msg.getSubject(), texto_(msg.getId()),
     ];
   });
 
@@ -216,6 +220,11 @@ function estadoPlanilla_(filas, cuentas, trabajador, anexos, mesTotales, conValo
   }
   const colPlanilla = COLS_CUENTAS.indexOf('Planilla seg. social');
   filas.forEach(f => { f[colPlanilla] = estado; });
+}
+
+/** Fuerza texto en la celda: sin esto Sheets vuelve "2026-10" una fecha y "0021" el número 21. */
+function texto_(v) {
+  return v === '' || v === null || v === undefined ? '' : `'${v}`;
 }
 
 function pesos_(n) {

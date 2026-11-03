@@ -68,7 +68,8 @@ Cada PDF incluye, al final de la descripción de la actividad, la nota:
 2. Abrir **Extensiones → Apps Script**, borrar el contenido de `Código.gs` y pegar el contenido de `apps-script/CuentasCobro.gs`. Guardar.
 3. Volver a la hoja y recargarla. Aparece el menú **Cuentas de cobro**.
 4. Ejecutar **Cuentas de cobro → Activar revisión automática (cada hora)** y aceptar los permisos (Gmail, Drive y Hojas de cálculo).
-5. Opcional: ejecutar **Procesar correos ahora** para cargar los correos de los últimos 7 días.
+5. Opcional: ejecutar **Procesar correos ahora** para cargar los correos de los últimos 7 días (nunca anteriores a
+   `CONFIG.FECHA_INICIO`, el 1 de noviembre de 2026).
 
 ### Qué hace
 
