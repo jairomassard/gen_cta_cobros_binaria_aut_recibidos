@@ -93,7 +93,7 @@ function procesarCuentasCobro() {
         const filas = filasDeMensaje_(msg, m, yaRegistradas, mesTotales);
         filas.forEach(f => filasCuentas.push(f));
         procesados.add(msg.getId());
-        hilo.addLabel(etiquetaOk);
+        hilo.addLabel(etiquetaOk).removeLabel(etiquetaRevisar);
       });
     });
 
@@ -108,7 +108,7 @@ function procesarCuentasCobro() {
         if (m) {
           filasDeMensaje_(msg, m, yaRegistradas, mesTotales).forEach(f => filasCuentas.push(f));
           procesados.add(msg.getId());
-          hilo.addLabel(etiquetaOk);
+          hilo.addLabel(etiquetaOk).removeLabel(etiquetaRevisar);
           return;
         }
         const pdfs = pdfsDe_(msg);
@@ -245,12 +245,20 @@ function asuntoDesdeBloque_(msg) {
   return m;
 }
 
-/** Lee el bloque estructurado del final del correo. Tolera respuestas citadas ("> "). */
+/**
+ * Lee el bloque estructurado del final del correo. Tolera respuestas citadas ("> ") y las líneas largas que Gmail
+ * parte en dos en el texto plano: un renglón que no empieza con una palabra clave continúa el anterior.
+ */
 function leerBloque_(texto) {
   const ini = texto.indexOf('--- DATOS PARA REGISTRO AUTOMATICO');
   if (ini < 0) return null;
   const fin = texto.indexOf('--- FIN DATOS ---', ini);
-  const lineas = texto.slice(ini, fin < 0 ? undefined : fin).split(/\r?\n/).map(l => l.replace(/^[>\s]+/, '').trim());
+  const lineas = [];
+  texto.slice(ini, fin < 0 ? undefined : fin).split(/\r?\n/).map(l => l.replace(/^[>\s]+/, '').trim()).forEach(l => {
+    if (!l) return;
+    if (/^(TRABAJADOR|MODALIDAD|CUENTA|TIPOS|---)/.test(l) || !lineas.length) lineas.push(l);
+    else lineas[lineas.length - 1] += ' ' + l;
+  });
   const num = v => (v === undefined || v === '' ? '' : Number(String(v).replace(/[^\d-]/g, '')));
   const out = { trabajador: null, modalidad: '', cuentas: [] };
   const tipos = {};
@@ -298,6 +306,12 @@ function prepararHojas_() {
   const colPlanilla = COLS_CUENTAS.indexOf('Planilla seg. social') + 1;
   const reglaPlanilla = SpreadsheetApp.newDataValidation().requireValueInList(CONFIG.ESTADOS_PLANILLA, true).build();
   hojaCuentas.getRange(2, colPlanilla, hojaCuentas.getMaxRows() - 1, 1).setDataValidation(reglaPlanilla);
+  // Formato fijo de fechas y valores, sin depender de la configuración regional de la hoja.
+  const formato = (h, cols, nombre, f) => h.getRange(2, cols.indexOf(nombre) + 1, h.getMaxRows() - 1, 1).setNumberFormat(f);
+  formato(hojaCuentas, COLS_CUENTAS, 'Fecha recepción', 'yyyy-mm-dd hh:mm');
+  formato(hojaCuentas, COLS_CUENTAS, 'Fecha emisión', 'yyyy-mm-dd');
+  ['Valor servicios', 'Valor gastos', 'Valor total'].forEach(c => formato(hojaCuentas, COLS_CUENTAS, c, '$#,##0'));
+  formato(hojaRevisar, COLS_REVISAR, 'Fecha recepción', 'yyyy-mm-dd hh:mm');
   return { hojaCuentas, hojaRevisar };
 }
 
