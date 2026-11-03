@@ -77,8 +77,11 @@ Cada PDF incluye, al final de la descripción de la actividad, la nota:
   (guardado en la carpeta de Drive "Cuentas de cobro recibidas"), **Estado** (Pendiente revisión / Verificada /
   Registrada en Siigo / Rechazada), **Observaciones**, y columnas para que la auxiliar contable diligencie el
   **centro de costo** y el **N.º de documento soporte de Siigo**.
+- **Carpetas en Drive**: junto a la hoja se crea `Cuentas de cobro recibidas`, organizada por periodo cobrado y por
+  persona: `2026-10 Octubre / JOHAN STEVEN CASTAÑEDA MEJIA - 1006155860 /`. El número del mes adelante mantiene el
+  orden cronológico; la identificación evita mezclar personas con el mismo nombre.
 - **Anexos**: los adjuntos que no son una cuenta de cobro (RUT, cédula y certificación bancaria del personal nuevo,
-  también fotos) se guardan en la misma carpeta de Drive como `ANEXO_<identificación>_<archivo>` y se listan en Observaciones.
+  también fotos) se guardan en la carpeta de la persona como `ANEXO_<archivo>` y se listan en Observaciones.
 - **Planilla seg. social** (columna): suma los *servicios* (sin gastos) de cada identificación + periodo, en todos
   sus correos. Si superan `CONFIG.TOPE_PLANILLA` (1.750.000) busca un anexo cuyo nombre diga planilla / PILA /
   seguridad social / parafiscal / aportes: *No requerida*, *Adjunta*, *Revisar anexos* (hay anexos con otro nombre),

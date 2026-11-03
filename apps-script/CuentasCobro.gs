@@ -161,6 +161,8 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
     obsGenerales.push('Sin bloque "DATOS PARA REGISTRO AUTOMATICO": completar valores, cliente y evento manualmente.');
   }
 
+  let carpeta = null; // se crea solo si hay adjuntos
+  const destino = () => carpeta || (carpeta = carpetaCuenta_(trabajador, msg));
   const filas = cuentas.map(c => {
     const obs = obsGenerales.slice();
     const llave = `${trabajador.id}|${c.numero}`;
@@ -172,7 +174,7 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
     let celdaPdf = 'NO ADJUNTO';
     if (pdf) {
       usados.add(pdf);
-      const archivo = carpetaPdf_().createFile(pdf.copyBlob()).setName(`${c.numero}_${trabajador.id}_${pdf.getName()}`);
+      const archivo = destino().createFile(pdf.copyBlob()).setName(pdf.getName());
       celdaPdf = `=HYPERLINK("${archivo.getUrl()}","Ver PDF")`;
     } else {
       obs.push('No se encontró un PDF con el número de la cuenta en el nombre del archivo.');
@@ -188,7 +190,7 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
   // se guardan en Drive como anexos y se listan en la primera fila del correo.
   const anexos = adjuntos.filter(a => !usados.has(a));
   if (anexos.length && filas.length) {
-    anexos.forEach(a => carpetaPdf_().createFile(a.copyBlob()).setName(`ANEXO_${trabajador.id}_${a.getName()}`));
+    anexos.forEach(a => destino().createFile(a.copyBlob()).setName(`ANEXO_${a.getName()}`));
     const col = COLS_CUENTAS.indexOf('Observaciones');
     filas[0][col] = [filas[0][col], `Anexos guardados en Drive (p. ej. RUT, cédula, certificación bancaria): ${anexos.map(a => a.getName()).join(', ')}`].filter(Boolean).join('\n');
   }
@@ -413,11 +415,35 @@ function carpetaPdf_() {
     if (carpeta && (carpeta.isTrashed() || !enCarpeta_(carpeta, destino))) carpeta = null;
   }
   if (!carpeta) {
-    carpeta = destino.createFolder(CONFIG.CARPETA_PDF);
+    const existentes = destino.getFoldersByName(CONFIG.CARPETA_PDF);
+    carpeta = existentes.hasNext() ? existentes.next() : destino.createFolder(CONFIG.CARPETA_PDF);
     props.setProperty('CARPETA_PDF_ID', carpeta.getId());
   }
   carpetaCache_ = carpeta;
   return carpeta;
+}
+
+/**
+ * Carpeta de una cuenta: "Cuentas de cobro recibidas / 2026-10 Octubre / NOMBRE - IDENTIFICACIÓN". El mes es el
+ * periodo que se cobra (las cuentas de octubre llegan en noviembre); sin periodo, el mes en que llegó el correo.
+ * El número adelante hace que Drive ordene los meses cronológicamente.
+ */
+const MESES_ = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+function carpetaCuenta_(trabajador, msg) {
+  const per = /^\d{4}-\d{2}$/.test(trabajador.periodo) ? trabajador.periodo : Utilities.formatDate(msg.getDate(), Session.getScriptTimeZone(), 'yyyy-MM');
+  const mes = subcarpeta_(carpetaPdf_(), `${per} ${MESES_[Number(per.slice(5)) - 1]}`);
+  const persona = `${trabajador.nombre || 'SIN NOMBRE'} - ${trabajador.id}`.replace(/[\/\\]/g, ' ').trim();
+  return subcarpeta_(mes, persona);
+}
+
+const subcarpetas_ = {};
+function subcarpeta_(padre, nombre) {
+  const llave = `${padre.getId()}/${nombre}`;
+  if (!subcarpetas_[llave]) {
+    const existentes = padre.getFoldersByName(nombre);
+    subcarpetas_[llave] = existentes.hasNext() ? existentes.next() : padre.createFolder(nombre);
+  }
+  return subcarpetas_[llave];
 }
 
 function enCarpeta_(carpeta, destino) {
