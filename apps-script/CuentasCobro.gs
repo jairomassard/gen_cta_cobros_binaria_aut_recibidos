@@ -124,6 +124,7 @@ function procesarCuentasCobro() {
     });
 
     escribir_(hojaCuentas, filasCuentas);
+    enlacesPdf_(hojaCuentas);
     marcarPlanillasRecibidas_(hojaCuentas, mesTotales);
     escribir_(hojaRevisar, filasRevisar);
     if (filasRevisar.length) hojaRevisar.getRange(hojaRevisar.getLastRow() - filasRevisar.length + 1, 7, filasRevisar.length, 1).insertCheckboxes();
@@ -175,7 +176,7 @@ function filasDeMensaje_(msg, m, yaRegistradas, mesTotales = new Map()) {
     if (pdf) {
       usados.add(pdf);
       const archivo = destino().createFile(pdf.copyBlob()).setName(pdf.getName());
-      celdaPdf = `=HYPERLINK("${archivo.getUrl()}","Ver PDF")`;
+      celdaPdf = archivo.getUrl(); // enlacesPdf_ lo convierte en "Ver PDF" con enlace
     } else {
       obs.push('No se encontró un PDF con el número de la cuenta en el nombre del archivo.');
     }
@@ -398,6 +399,22 @@ function marcarPlanillasRecibidas_(h, mesTotales) {
 /** Sheets puede convertir "2026-10" en fecha al guardarlo: se vuelve a texto AAAA-MM para comparar. */
 function periodoTexto_(v) {
   return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM') : String(v);
+}
+
+/**
+ * Columna PDF: la URL guardada (o la fórmula HYPERLINK de versiones anteriores, que da #ERROR! cuando la hoja usa
+ * configuración regional Colombia, con ";" entre argumentos) se convierte en el texto "Ver PDF" con enlace.
+ */
+function enlacesPdf_(h) {
+  const ult = h.getLastRow();
+  if (ult < 2) return;
+  const rango = h.getRange(2, COLS_CUENTAS.indexOf('PDF') + 1, ult - 1, 1);
+  const formulas = rango.getFormulas();
+  rango.getValues().forEach(([v], i) => {
+    const m = String(formulas[i][0]).match(/HYPERLINK\("([^"]+)"/i);
+    const url = m ? m[1] : (/^https?:\/\//.test(String(v)) ? String(v) : null);
+    if (url) rango.getCell(i + 1, 1).setRichTextValue(SpreadsheetApp.newRichTextValue().setText('Ver PDF').setLinkUrl(url).build());
+  });
 }
 
 function escribir_(h, filas) {

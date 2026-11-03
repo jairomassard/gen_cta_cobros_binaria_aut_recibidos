@@ -91,7 +91,8 @@ Si se agregan campos, usar **líneas nuevas** (el parser ignora las desconocidas
 - Una fila por cuenta en la hoja "Cuentas de cobro"; guarda el PDF en la carpeta de Drive "Cuentas de cobro recibidas" (creada junto a la Google Sheet, que está en una **unidad compartida**; si la guardada está en otro lugar `carpetaPdf_` crea una nueva: un script no puede mover carpetas a una unidad compartida). Organización en Drive (`carpetaCuenta_`): `Cuentas de cobro recibidas / AAAA-MM Mes (periodo cobrado; sin periodo, mes de llegada) / NOMBRE - IDENTIFICACIÓN /` con el PDF con su nombre original. Los demás adjuntos (RUT, cédula, certificación bancaria, planilla) se guardan como `ANEXO_<archivo>` y se listan en Observaciones de la primera fila del correo
   (asociado por el número como palabra completa en el nombre del archivo).
 - `leerBloque_` une las líneas que Gmail parte en el texto plano (caso real: TIPOS de CC-2026-004 de Johan quedó cortado).
-  Al registrar un correo se le quita la etiqueta "Por revisar" si la tenía. Formatos fijos de fecha y valores en `prepararHojas_`.
+  Al registrar un correo se le quita la etiqueta "Por revisar" si la tenía.
+  La columna PDF es texto "Ver PDF" con enlace (`enlacesPdf_`), no fórmula: `=HYPERLINK(...,...)` daba #ERROR! con locale Colombia. Formatos fijos de fecha y valores en `prepararHojas_`.
 - Observaciones automáticas: posible duplicado (misma identificación + número), PDF faltante o sobrante, totales que no
   cuadran, asunto y cuerpo que no coinciden, correo sin bloque.
 - Asunto sin formato pero con el bloque de datos completo en el cuerpo (`asuntoDesdeBloque_`): se registra igual con
